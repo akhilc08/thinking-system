@@ -28,11 +28,27 @@ from benchmark.models import DimensionScore, ScoreResult
 from benchmark.vendor_bootstrap import LIT8D_SYSTEM, score_one, vendor_config
 
 
+# The vendored config.json ships 5 critic_models, but only the first 3
+# produced the published leaderboard. Both vendored production scripts slice
+# the list rather than iterating it:
+#   experiments/e13_litverify_rubric8.py:454  critics = list(cfg.CRITIC_MODELS)[:n_critics]
+#   experiments/e16_v4_full_lit8d.py:104      critics = list(cfg.CRITIC_MODELS)[:n_critics]
+# with n_critics defaulting to 3. Their README is explicit: "Keep the critics
+# fixed. The published totals use qwen/qwen3.6-plus, moonshotai/kimi-k2.6 and
+# z-ai/glm-5.1. Changing the critic ensemble changes the scale."
+#
+# Scoring all 5 would build a drop-highest-of-5 aggregate and compare it
+# against a drop-highest-of-3 baseline -- a silent scale mismatch. We slice the
+# same way they do rather than hardcoding the three model names, so this tracks
+# config.json if their roster is ever reordered or extended.
+PUBLISHED_N_CRITICS = 3
+
+
 def score_hypothesis(hypothesis, cutoff_date: str = "2026-05-31") -> ScoreResult:
     item_id = f"{hypothesis.source}|{hypothesis.subfield[:40]}"
     references = build_evidence(item_id, hypothesis.text, cutoff_date)
 
-    critics = list(vendor_config.CRITIC_MODELS)
+    critics = list(vendor_config.CRITIC_MODELS)[:PUBLISHED_N_CRITICS]
     per_critic: dict[str, dict[str, DimensionScore]] = {}
     for critic in critics:
         raw_scores, _raw_response = score_one(
