@@ -1,7 +1,14 @@
 import subprocess
 import sys
+from pathlib import Path
 
 from benchmark import vendor_bootstrap as vb
+
+# tests/benchmark/test_vendor_bootstrap.py -> parents[2] is the repo root
+# (the directory holding pyproject.toml, src/ and project_config/). Derived
+# rather than hardcoded so this test survives the worktree being removed after
+# a merge, and runs on any other machine or in CI.
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_vendor_bootstrap_is_order_independent():
@@ -31,7 +38,7 @@ print("SUCCESS")
 """
     result = subprocess.run(
         [sys.executable, "-c", code],
-        cwd="/Users/sickle/Coding/thinking-system/.claude/worktrees/benchmark-harness",
+        cwd=str(REPO_ROOT),
         capture_output=True,
         text=True
     )
