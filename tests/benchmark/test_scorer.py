@@ -45,6 +45,8 @@ def test_aggregate_handles_two_critics_by_using_lower_of_the_two():
 
 from unittest.mock import patch
 
+import pytest
+
 from benchmark.models import Hypothesis
 from benchmark.scorer import score_hypothesis
 
@@ -80,6 +82,8 @@ def test_score_hypothesis_calls_all_three_critics_and_aggregates():
         "qwen/qwen3.6-plus", "moonshotai/kimi-k2.6", "z-ai/glm-5.1",
     }
     assert result.hypothesis is hyp
+    # A clean, fully-3-critic score -- directly comparable to published numbers.
+    assert result.n_critics == 3
 
 
 def test_score_hypothesis_skips_a_critic_whose_call_failed():
@@ -99,3 +103,34 @@ def test_score_hypothesis_skips_a_critic_whose_call_failed():
     # originality [9, 6], len < 2 rule doesn't apply since we have 2 values ->
     # trimmed_mean([9, 6]) drops 9, returns [6]
     assert result.per_dimension_trimmed["originality"] == 6
+    # A degraded 2-critic score must be *recorded* as such, so a consumer can
+    # tell it apart from a clean 3-critic one (it isn't directly comparable to
+    # published 3-critic numbers).
+    assert result.n_critics == 2
+
+
+def test_score_hypothesis_raises_a_clear_error_when_every_critic_fails():
+    # Realistic first-run failure: bad/expired OPENROUTER_API_KEY or a
+    # rate-limit burst makes all 3 score_one calls return (None, raw).
+    # Without an explicit guard this used to blow up deep inside the weighted
+    # sum as `TypeError: unsupported operand type(s) for *: 'NoneType' and
+    # 'float'`, whose traceback points at arithmetic, not the real cause.
+    hyp = Hypothesis("t", "Computer Science", "quantum error correction", "text", "our_swarm")
+    with patch("benchmark.scorer.vendor_config") as mock_cfg, \
+         patch("benchmark.scorer.build_evidence", return_value="PRIOR-ART: none"), \
+         patch("benchmark.scorer.score_one") as mock_score_one:
+        mock_cfg.CRITIC_MODELS = ["qwen/qwen3.6-plus", "moonshotai/kimi-k2.6", "z-ai/glm-5.1"]
+        mock_score_one.side_effect = [
+            (None, "ERR: 401 Unauthorized"),
+            (None, "ERR: 401 Unauthorized"),
+            (None, "ERR: 401 Unauthorized"),
+        ]
+        with pytest.raises(RuntimeError) as excinfo:
+            score_hypothesis(hyp)
+
+    message = str(excinfo.value)
+    # The message must actually help someone debug this.
+    assert "quantum error correction" in message       # which hypothesis
+    assert "our_swarm" in message                      # where it came from
+    assert "qwen/qwen3.6-plus" in message              # which critics were tried
+    assert "OPENROUTER_API_KEY" in message             # what to go check

@@ -32,8 +32,9 @@ def score_hypothesis(hypothesis, cutoff_date: str = "2026-05-31") -> ScoreResult
     item_id = f"{hypothesis.source}|{hypothesis.subfield[:40]}"
     references = build_evidence(item_id, hypothesis.text, cutoff_date)
 
+    critics = list(vendor_config.CRITIC_MODELS)
     per_critic: dict[str, dict[str, DimensionScore]] = {}
-    for critic in vendor_config.CRITIC_MODELS:
+    for critic in critics:
         raw_scores, _raw_response = score_one(
             hypothesis.text, critic, hypothesis.domain, LIT8D_SYSTEM, references,
         )
@@ -43,6 +44,21 @@ def score_hypothesis(hypothesis, cutoff_date: str = "2026-05-31") -> ScoreResult
             dim: DimensionScore(dim, v["score"], v["reasoning"])
             for dim, v in raw_scores.items()
         }
+
+    if not per_critic:
+        # Without this guard, aggregate_dimension_scores({}) yields None for
+        # every dimension and the weighted sum dies on `None * float` -- a
+        # TypeError whose traceback points at arithmetic rather than at the
+        # real cause (no critic responded at all).
+        raise RuntimeError(
+            "No critic returned a usable score for hypothesis "
+            f"{hypothesis.source}|{hypothesis.subfield!r} "
+            f"(domain: {hypothesis.domain}). All {len(critics)} critic calls "
+            f"failed or returned unparseable output: {', '.join(critics)}. "
+            "This usually means a bad/expired OPENROUTER_API_KEY, an exhausted "
+            "credit balance, or a rate-limit burst -- check "
+            "vendor/AgentIdeaBench/.env and retry."
+        )
 
     per_critic_int_scores = {
         critic: {dim: ds.score for dim, ds in dims.items()}
@@ -55,4 +71,5 @@ def score_hypothesis(hypothesis, cutoff_date: str = "2026-05-31") -> ScoreResult
         per_critic=per_critic,
         per_dimension_trimmed=per_dimension_trimmed,
         weighted_total=weighted_total,
+        n_critics=len(per_critic),
     )
