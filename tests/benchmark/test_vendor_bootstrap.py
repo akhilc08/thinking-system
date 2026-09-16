@@ -5,20 +5,25 @@ from benchmark import vendor_bootstrap as vb
 
 
 def test_vendor_bootstrap_is_order_independent():
-    """Test that vendor_bootstrap works even if config.benchmark is imported first.
+    """Test that vendor_bootstrap works even if project_config.benchmark is imported first.
 
-    This verifies that the fix using importlib.util.spec_from_file_location
-    correctly avoids sys.modules collision between our project's config package
-    and the vendored config.py.
+    This verifies that renaming our config package to project_config eliminates any
+    sys.modules collision between our project's config package and the vendored config.py.
+    Both namespaces should coexist cleanly with no import-order sensitivity.
     """
-    # Run a subprocess that imports config.benchmark first, then vendor_bootstrap
+    # Run a subprocess that imports project_config.benchmark first, then vendor_bootstrap
     code = """
 import sys
 sys.path.insert(0, 'src')
-import config.benchmark as our_cfg
+import project_config.benchmark as our_cfg
 from benchmark import vendor_bootstrap as vb
 
-# Verify that vendor_config has the expected attribute from the vendored config
+# Verify both namespaces work correctly after imports
+# 1. Our project_config namespace is still accessible via plain attribute access
+assert hasattr(our_cfg, 'VENDOR_ROOT'), "project_config.benchmark missing VENDOR_ROOT"
+assert hasattr(our_cfg, 'CACHE_DIR'), "project_config.benchmark missing CACHE_DIR"
+
+# 2. Vendor config is accessible via vendor_bootstrap
 assert hasattr(vb.vendor_config, 'CRITIC_MODELS'), "vendor_config missing CRITIC_MODELS"
 assert isinstance(vb.vendor_config.CRITIC_MODELS, list), "CRITIC_MODELS should be a list"
 assert len(vb.vendor_config.CRITIC_MODELS) > 0, "CRITIC_MODELS should not be empty"
