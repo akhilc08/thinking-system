@@ -25,11 +25,19 @@ def load_published_score(idea_model: str, track: str, subdomain: str) -> float |
     if rows.empty:
         return None
 
-    per_critic_scores = {}
-    for _, row in rows.iterrows():
-        per_critic_scores[row["critic_model"]] = {
-            dim: row[col] for dim, col in _DIM_COLUMNS.items()
-        }
+    # A (idea_model, track, subdomain) triple can have multiple released
+    # hypotheses (idea_index 1, 2, 3), each scored by the same critics.
+    # Aggregate per idea_index first (so per_critic_scores never mixes rows
+    # from two different ideas under one critic_model key), then average the
+    # resulting weighted totals across ideas.
+    per_idea_totals = []
+    for _idea_index, group in rows.groupby("idea_index"):
+        per_critic_scores = {}
+        for _, row in group.iterrows():
+            per_critic_scores[row["critic_model"]] = {
+                dim: row[col] for dim, col in _DIM_COLUMNS.items()
+            }
+        _per_dim, weighted_total = aggregate_dimension_scores(per_critic_scores)
+        per_idea_totals.append(weighted_total)
 
-    _per_dim, weighted_total = aggregate_dimension_scores(per_critic_scores)
-    return weighted_total
+    return sum(per_idea_totals) / len(per_idea_totals)
