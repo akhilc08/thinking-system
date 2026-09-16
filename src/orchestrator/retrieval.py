@@ -38,7 +38,7 @@ def search_literature(query: str, limit: int = 5, api_key: str = SEMANTIC_SCHOLA
         hits.append(PaperHit(
             title=paper.get("title") or "",
             abstract=paper.get("abstract") or "",
-            year=paper.get("year"),
+            year=paper.get("year") or 0,
             citation_count=paper.get("citationCount") or 0,
             url=paper.get("url") or "",
         ))
