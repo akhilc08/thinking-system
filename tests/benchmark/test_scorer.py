@@ -41,3 +41,61 @@ def test_aggregate_handles_two_critics_by_using_lower_of_the_two():
     }
     per_dim, _ = aggregate_dimension_scores(per_critic_scores)
     assert per_dim["originality"] == 4  # drop 8, left with [4]
+
+
+from unittest.mock import patch
+
+from benchmark.models import Hypothesis
+from benchmark.scorer import score_hypothesis
+
+
+def _fake_scores(originality):
+    return {
+        "originality": {"score": originality, "reasoning": "r"},
+        "feasibility": {"score": 6, "reasoning": "r"},
+        "clarity": {"score": 6, "reasoning": "r"},
+        "impact": {"score": 6, "reasoning": "r"},
+        "specificity": {"score": 6, "reasoning": "r"},
+    }
+
+
+def test_score_hypothesis_calls_all_three_critics_and_aggregates():
+    hyp = Hypothesis("t", "Computer Science", "t", "We hypothesize that...", "our_swarm")
+
+    with patch("benchmark.scorer.vendor_config") as mock_cfg, \
+         patch("benchmark.scorer.build_evidence", return_value="PRIOR-ART: none"), \
+         patch("benchmark.scorer.score_one") as mock_score_one:
+        mock_cfg.CRITIC_MODELS = ["qwen/qwen3.6-plus", "moonshotai/kimi-k2.6", "z-ai/glm-5.1"]
+        mock_score_one.side_effect = [
+            (_fake_scores(9), "raw1"),
+            (_fake_scores(5), "raw2"),
+            (_fake_scores(6), "raw3"),
+        ]
+        result = score_hypothesis(hyp)
+
+    assert mock_score_one.call_count == 3
+    # originality [9, 5, 6] -> drop 9 -> mean([5, 6]) = 5.5
+    assert result.per_dimension_trimmed["originality"] == 5.5
+    assert set(result.per_critic.keys()) == {
+        "qwen/qwen3.6-plus", "moonshotai/kimi-k2.6", "z-ai/glm-5.1",
+    }
+    assert result.hypothesis is hyp
+
+
+def test_score_hypothesis_skips_a_critic_whose_call_failed():
+    hyp = Hypothesis("t", "Computer Science", "t", "text", "our_swarm")
+    with patch("benchmark.scorer.vendor_config") as mock_cfg, \
+         patch("benchmark.scorer.build_evidence", return_value="PRIOR-ART: none"), \
+         patch("benchmark.scorer.score_one") as mock_score_one:
+        mock_cfg.CRITIC_MODELS = ["qwen/qwen3.6-plus", "moonshotai/kimi-k2.6", "z-ai/glm-5.1"]
+        mock_score_one.side_effect = [
+            (_fake_scores(9), "raw1"),
+            (None, "ERR: parse failure"),
+            (_fake_scores(6), "raw3"),
+        ]
+        result = score_hypothesis(hyp)
+
+    assert len(result.per_critic) == 2
+    # originality [9, 6], len < 2 rule doesn't apply since we have 2 values ->
+    # trimmed_mean([9, 6]) drops 9, returns [6]
+    assert result.per_dimension_trimmed["originality"] == 6
