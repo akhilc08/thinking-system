@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -45,3 +45,13 @@ async def test_evolve_round_skips_combine_when_pool_has_one_candidate():
     strategies = {c.source_strategy for c in result}
     assert "combine" not in strategies
     assert len(result) == 4
+
+
+@pytest.mark.asyncio
+async def test_evolve_round_returns_empty_list_for_empty_pool_without_calling_backend():
+    backend = Mock()
+
+    result = await evolve_round([], backend, round_num=1, topic="t")
+
+    assert result == []
+    backend.call.assert_not_called()

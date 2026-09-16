@@ -29,7 +29,7 @@ class SentenceTransformerBackend:
         return self._model
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        return self._get_model().encode(texts)
+        return self._get_model().encode(texts).tolist()
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:

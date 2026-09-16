@@ -3,6 +3,8 @@
 braces), then a bounded number of re-prompts asking the model to correct
 its own output.
 """
+from __future__ import annotations
+
 import json
 import re
 

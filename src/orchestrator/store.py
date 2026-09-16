@@ -3,6 +3,8 @@ the vendored repo's — designed for the same idempotent/resumable-run
 property: a run's status and its last-completed round are checked before
 re-running a round, so an interrupted run can pick up where it left off.
 """
+from __future__ import annotations
+
 import json
 import sqlite3
 from pathlib import Path

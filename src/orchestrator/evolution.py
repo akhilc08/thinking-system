@@ -52,6 +52,8 @@ def _deliberate_divergence(backend, pool: list, topic: str, round_num: int) -> C
 
 
 async def evolve_round(pool: list, backend, round_num: int, topic: str) -> list:
+    if not pool:
+        return []
     top = sorted(pool, key=lambda c: c.elo, reverse=True)
     top3 = top[:3]
     best = top[0]
