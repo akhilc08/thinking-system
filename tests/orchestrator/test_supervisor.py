@@ -99,6 +99,74 @@ async def test_run_supervisor_skips_already_completed_run(tmp_path):
     assert len(summary.final_candidates) == 1
 
 
+@pytest.mark.asyncio
+async def test_run_supervisor_resumes_with_prior_meta_review_guidance(tmp_path):
+    store = RunStore(tmp_path / "test.db")
+    memory = MemoryStore(tmp_path / "test.db")
+    config = _config(rounds=2)
+
+    # Simulate an interrupted run: round 1 already completed and persisted,
+    # including its synthesized meta_review_guidance, but the run itself is
+    # not marked "completed" (so run_supervisor should resume at round 2).
+    store.create_run(config)
+    store.save_candidate(config.run_id, _candidate("round 1 idea"))
+    store.record_round_start(config.run_id, 1)
+    store.record_round_complete(config.run_id, 1, "guidance from persisted round 1")
+
+    generate_calls = []
+
+    async def fake_generate_round(cfg, backend, mem, prox, round_num, meta_review_guidance=""):
+        generate_calls.append(meta_review_guidance)
+        return [_candidate(f"idea round {round_num}")]
+
+    async def fake_reflect_round(pool, backend):
+        return []
+
+    def fake_filter_passed(pool, critiques):
+        return pool
+
+    async def fake_rank_round(pool, backend, proximity, n_pairs):
+        return []
+
+    async def fake_evolve_round(pool, backend, round_num, topic):
+        return []
+
+    with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
+         patch("orchestrator.supervisor.reflect_round", fake_reflect_round), \
+         patch("orchestrator.supervisor.filter_passed", fake_filter_passed), \
+         patch("orchestrator.supervisor.rank_round", fake_rank_round), \
+         patch("orchestrator.supervisor.evolve_round", fake_evolve_round), \
+         patch("orchestrator.supervisor.synthesize_meta_review", return_value="guidance from round 2"):
+        summary = await run_supervisor(config, Mock(), _fake_embedding_backend(), store, memory)
+
+    assert generate_calls == ["guidance from persisted round 1"]
+    assert summary.status == "completed"
+
+
+@pytest.mark.asyncio
+async def test_run_supervisor_persists_pool_candidates_when_truncated(tmp_path):
+    store = RunStore(tmp_path / "test.db")
+    memory = MemoryStore(tmp_path / "test.db")
+    config = _config(max_model_calls=1, rounds=1)
+
+    async def fake_generate_round(cfg, backend, mem, prox, round_num, meta_review_guidance=""):
+        backend.call("generation", "sys", "usr")  # consumes the single allotted call
+        return [_candidate("idea that should be persisted")]
+
+    async def fake_reflect_round(pool, backend):
+        backend.call("reflection", "sys", "usr")  # exceeds the budget
+        return []
+
+    with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
+         patch("orchestrator.supervisor.reflect_round", fake_reflect_round):
+        summary = await run_supervisor(config, Mock(), _fake_embedding_backend(), store, memory)
+
+    assert summary.status == "truncated_call_budget"
+    persisted = store.get_pool(config.run_id)
+    assert len(persisted) == 1
+    assert persisted[0].text == "idea that should be persisted"
+
+
 def test_counting_backend_raises_past_budget():
     inner = Mock()
     inner.call.return_value = "response"

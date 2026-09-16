@@ -49,7 +49,7 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
     counting_backend = CountingBackend(backend, config.max_model_calls)
     start_round = store.last_completed_round(config.run_id) + 1
     pool = _trim_pool(store.get_pool(config.run_id), config.pool_size) if start_round > 1 else []
-    meta_review_guidance = ""
+    meta_review_guidance = store.get_last_meta_review_guidance(config.run_id) if start_round > 1 else ""
     truncated = False
 
     try:
@@ -86,6 +86,9 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
             store.record_round_complete(config.run_id, round_num, meta_review_guidance)
     except CallBudgetExceeded:
         truncated = True
+
+    for candidate in pool:
+        store.save_candidate(config.run_id, candidate)
 
     proximity.compute_embeddings(pool)
     final_candidates = proximity.select_diverse_topk(pool, config.k_final, config.diverse_selection_similarity_threshold)

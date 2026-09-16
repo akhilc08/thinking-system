@@ -37,6 +37,25 @@ def test_round_lifecycle_and_resumability(tmp_path):
     assert store.last_completed_round(config.run_id) == 1  # resume point stays at 1
 
 
+def test_get_last_meta_review_guidance_returns_latest_completed_rounds_guidance(tmp_path):
+    store = RunStore(tmp_path / "test.db")
+    config = _config()
+    store.create_run(config)
+
+    assert store.get_last_meta_review_guidance(config.run_id) == ""
+
+    store.record_round_start(config.run_id, 1)
+    store.record_round_complete(config.run_id, 1, "guidance from round 1")
+    assert store.get_last_meta_review_guidance(config.run_id) == "guidance from round 1"
+
+    store.record_round_start(config.run_id, 2)
+    store.record_round_complete(config.run_id, 2, "guidance from round 2")
+    assert store.get_last_meta_review_guidance(config.run_id) == "guidance from round 2"
+
+    store.record_round_start(config.run_id, 3)  # round 3 never completes
+    assert store.get_last_meta_review_guidance(config.run_id) == "guidance from round 2"
+
+
 def test_save_candidate_and_get_pool(tmp_path):
     store = RunStore(tmp_path / "test.db")
     config = _config()

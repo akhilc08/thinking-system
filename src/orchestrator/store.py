@@ -99,6 +99,14 @@ class RunStore:
         ).fetchone()
         return row[0] if row and row[0] is not None else 0
 
+    def get_last_meta_review_guidance(self, run_id: str) -> str:
+        row = self._conn.execute(
+            "SELECT meta_review_guidance FROM rounds WHERE run_id = ? AND status = 'completed' "
+            "ORDER BY round_num DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+        return row[0] if row and row[0] is not None else ""
+
     def save_candidate(self, run_id: str, candidate: Candidate) -> None:
         self._conn.execute(
             "INSERT OR REPLACE INTO candidates (candidate_id, run_id, round_num, text, source_strategy, parent_ids, elo) "
