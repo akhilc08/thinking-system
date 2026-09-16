@@ -46,7 +46,7 @@ def main():
 
     print(f"Subfield: {row['subdomain']} ({row['domain']})")
     print(f"Original model: {row['idea_model']}, track {row['track']}")
-    print(f"Published average (across all 3 released hypotheses for this cell): {published:.2f}")
+    print(f"Published average (across all released hypotheses for this cell): {published:.2f}")
     print(f"Our re-score of this ONE specific hypothesis: {result.weighted_total:.2f}")
     print(f"Difference: {abs(published - result.weighted_total):.2f}")
     print("\nPer-dimension (published critics may differ from ours by random selection):")
