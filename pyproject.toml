@@ -5,6 +5,8 @@ requires-python = ">=3.9"
 dependencies = [
     "requests",
     "pandas",
+    "openai==1.82.0",
+    "python-dotenv==1.1.0",
 ]
 
 [project.optional-dependencies]
