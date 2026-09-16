@@ -1,10 +1,9 @@
 [project]
-name = "thinking-system"
+name = "orchestrator"
 version = "0.1.0"
 requires-python = ">=3.9"
 dependencies = [
     "requests",
-    "pandas",
     "numpy",
     "sentence-transformers",
 ]

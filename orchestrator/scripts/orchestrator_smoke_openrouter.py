@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from config.orchestrator import DEFAULT_GENERATION_MODEL, OPENROUTER_API_KEY
+from config import DEFAULT_GENERATION_MODEL, OPENROUTER_API_KEY
 from orchestrator.backend import OpenRouterBackend
 from orchestrator.embeddings import SentenceTransformerBackend
 from orchestrator.memory import MemoryStore

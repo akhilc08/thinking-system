@@ -1,11 +1,10 @@
 """Project-level config for the orchestrator. Independent of
-vendor/AgentIdeaBench and of config/benchmark.py — the orchestrator is a
-standalone system (see plan header)."""
+vendor/AgentIdeaBench — the orchestrator is a standalone system."""
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
-DB_PATH = PROJECT_ROOT / ".data" / "orchestrator" / "runs.db"
+PROJECT_ROOT = Path(__file__).parent
+DB_PATH = PROJECT_ROOT / ".data" / "runs.db"
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")

@@ -4,7 +4,7 @@
 import argparse
 import asyncio
 
-from config.orchestrator import DB_PATH, DEFAULT_GENERATION_MODEL, OPENROUTER_API_KEY
+from config import DB_PATH, DEFAULT_GENERATION_MODEL, OPENROUTER_API_KEY
 from orchestrator.backend import OpenRouterBackend
 from orchestrator.claude_code_backend import ClaudeCodeBackend
 from orchestrator.embeddings import SentenceTransformerBackend

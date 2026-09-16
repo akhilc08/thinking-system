@@ -11,7 +11,7 @@ from typing import Protocol
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from config.orchestrator import DEFAULT_EMBEDDING_MODEL
+from config import DEFAULT_EMBEDDING_MODEL
 
 
 class EmbeddingBackend(Protocol):

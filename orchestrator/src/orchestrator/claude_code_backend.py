@@ -9,7 +9,7 @@ import json
 import subprocess
 import time
 
-from config.orchestrator import CLAUDE_CLI_PATH
+from config import CLAUDE_CLI_PATH
 from orchestrator.backend import BackendError, retry_with_backoff
 
 

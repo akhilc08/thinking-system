@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import requests
 
-from config.orchestrator import SEMANTIC_SCHOLAR_API_KEY
+from config import SEMANTIC_SCHOLAR_API_KEY
 
 SEMANTIC_SCHOLAR_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 FIELDS = "title,abstract,year,citationCount,url"

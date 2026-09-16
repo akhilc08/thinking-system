@@ -8,7 +8,7 @@ from typing import Protocol
 
 import requests
 
-from config.orchestrator import OPENROUTER_BASE_URL
+from config import OPENROUTER_BASE_URL
 
 
 class ModelBackend(Protocol):
