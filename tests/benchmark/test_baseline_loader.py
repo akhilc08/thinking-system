@@ -1,7 +1,38 @@
+import math
+
 import pandas as pd
 
 from benchmark.baseline_loader import load_published_score
 from benchmark.scorer import aggregate_dimension_scores
+
+_CLEAN_CRITICS = {
+    "qwen/qwen3.6-plus": {"originality": 9, "feasibility": 6, "clarity": 7, "impact": 8, "specificity": 6},
+    "moonshotai/kimi-k2.6": {"originality": 5, "feasibility": 7, "clarity": 6, "impact": 5, "specificity": 5},
+    "z-ai/glm-5.1": {"originality": 6, "feasibility": 5, "clarity": 5, "impact": 6, "specificity": 4},
+}
+
+_LOW_CRITICS = {
+    "qwen/qwen3.6-plus": {"originality": 2, "feasibility": 2, "clarity": 2, "impact": 2, "specificity": 2},
+    "moonshotai/kimi-k2.6": {"originality": 3, "feasibility": 3, "clarity": 3, "impact": 3, "specificity": 3},
+    "z-ai/glm-5.1": {"originality": 4, "feasibility": 4, "clarity": 4, "impact": 4, "specificity": 4},
+}
+
+
+def _row(idea_model, track, subdomain, idea_index, critic, dims, error=None):
+    """Build one row shaped like release_data/core/lit8d_scores_3seed.csv.gz."""
+    return {
+        "idea_model": idea_model,
+        "track": track,
+        "subdomain": subdomain,
+        "idea_index": idea_index,
+        "critic_model": critic,
+        "score_originality": dims["originality"] if dims else float("nan"),
+        "score_feasibility": dims["feasibility"] if dims else float("nan"),
+        "score_clarity": dims["clarity"] if dims else float("nan"),
+        "score_impact": dims["impact"] if dims else float("nan"),
+        "score_specificity": dims["specificity"] if dims else float("nan"),
+        "error": error,
+    }
 
 
 def _fake_scores_df():
@@ -92,3 +123,94 @@ def test_load_published_score_averages_across_multiple_ideas_not_blended_rows(mo
     blended_per_critic.update(idea2_critics)
     _, blended_total = aggregate_dimension_scores(blended_per_critic)
     assert score != blended_total
+
+
+def test_load_published_score_excludes_errored_critic_rows(monkeypatch):
+    # lit8d_scores_3seed.csv.gz has an `error` column; 515 of its 47,013 rows
+    # are error="parse_fail" with NaN in every score_* column. Those NaNs must
+    # be dropped before aggregation, or they propagate and the function
+    # silently returns nan (a float, so no `is None` check catches it).
+    # The vendor's own analyze() does the equivalent via
+    # "WHERE variant=? AND scores_json IS NOT NULL".
+    rows = [
+        _row("m", "C", "sub", 1, critic, dims)
+        for critic, dims in _CLEAN_CRITICS.items()
+    ]
+    rows.append(_row("m", "C", "sub", 1, "broken/critic", None, error="parse_fail"))
+    df = pd.DataFrame(rows)
+    monkeypatch.setattr("benchmark.baseline_loader._load_scores_dataframe", lambda: df)
+
+    score = load_published_score("m", "C", "sub")
+
+    assert score is not None
+    assert not math.isnan(score)
+    # Must equal the 3 clean critics' aggregation exactly -- i.e. the errored
+    # row contributed nothing at all, rather than merely not crashing.
+    _, expected = aggregate_dimension_scores(_CLEAN_CRITICS)
+    assert score == expected
+
+
+def test_load_published_score_returns_none_when_every_row_errored(monkeypatch):
+    df = pd.DataFrame([
+        _row("m", "C", "sub", 1, critic, None, error="parse_fail")
+        for critic in _CLEAN_CRITICS
+    ])
+    monkeypatch.setattr("benchmark.baseline_loader._load_scores_dataframe", lambda: df)
+
+    assert load_published_score("m", "C", "sub") is None
+
+
+def test_load_published_score_skips_fully_errored_idea_and_averages_the_rest(monkeypatch):
+    # idea_index 1 is usable, idea_index 2 is entirely parse_fail rows. The
+    # returned average should be idea 1's total alone, not a NaN-poisoned mean.
+    rows = [
+        _row("m", "C", "sub", 1, critic, dims)
+        for critic, dims in _CLEAN_CRITICS.items()
+    ]
+    rows += [
+        _row("m", "C", "sub", 2, critic, None, error="parse_fail")
+        for critic in _LOW_CRITICS
+    ]
+    df = pd.DataFrame(rows)
+    monkeypatch.setattr("benchmark.baseline_loader._load_scores_dataframe", lambda: df)
+
+    score = load_published_score("m", "C", "sub")
+
+    _, expected = aggregate_dimension_scores(_CLEAN_CRITICS)
+    assert score == expected
+
+
+def test_load_published_score_with_idea_index_isolates_that_one_hypothesis(monkeypatch):
+    # Comparing our single re-scored hypothesis against a mean over all
+    # released hypotheses for the cell understates real per-idea variance.
+    # With idea_index given, the result must be that one idea's aggregation.
+    rows = []
+    for idea_index, critics in [(1, _CLEAN_CRITICS), (2, _LOW_CRITICS)]:
+        for critic, dims in critics.items():
+            rows.append(_row("m", "C", "sub", idea_index, critic, dims))
+    df = pd.DataFrame(rows)
+    monkeypatch.setattr("benchmark.baseline_loader._load_scores_dataframe", lambda: df)
+
+    _, expected_idea1 = aggregate_dimension_scores(_CLEAN_CRITICS)
+    _, expected_idea2 = aggregate_dimension_scores(_LOW_CRITICS)
+
+    assert load_published_score("m", "C", "sub", idea_index=1) == expected_idea1
+    assert load_published_score("m", "C", "sub", idea_index=2) == expected_idea2
+
+    # Not blended with, nor averaged against, the other idea_index's rows.
+    assert expected_idea1 != expected_idea2
+    assert load_published_score("m", "C", "sub", idea_index=1) != (
+        (expected_idea1 + expected_idea2) / 2
+    )
+    # Default (no idea_index) still averages across ideas -- backward compatible.
+    assert load_published_score("m", "C", "sub") == (expected_idea1 + expected_idea2) / 2
+
+
+def test_load_published_score_returns_none_for_unknown_idea_index(monkeypatch):
+    df = pd.DataFrame([
+        _row("m", "C", "sub", 1, critic, dims)
+        for critic, dims in _CLEAN_CRITICS.items()
+    ])
+    monkeypatch.setattr("benchmark.baseline_loader._load_scores_dataframe", lambda: df)
+
+    assert load_published_score("m", "C", "sub", idea_index=99) is None
