@@ -4,14 +4,17 @@ being kept, so the swarm doesn't re-propose ideas it already tried.
 """
 import asyncio
 
+from orchestrator.idea_schema import RESPONSE_FORMAT, render_idea
 from orchestrator.json_utils import call_with_json_retry
 from orchestrator.models import Candidate
 from orchestrator.retrieval import format_papers_for_prompt, search_literature
 
 _SYSTEM_PROMPT = (
     "You are a Generation agent in a research-ideation swarm. Produce ONE "
-    "concrete, conceptually distinct research hypothesis for the given topic. "
-    'Respond with ONLY a JSON object: {"idea": "<the hypothesis, 2-4 sentences>"}.'
+    "concrete, conceptually distinct research hypothesis for the given topic, "
+    "broken into the structured fields below rather than a single free-text "
+    "blob — each field must add real information, not restate another field.\n\n"
+    + RESPONSE_FORMAT
 )
 
 _DIRECTION_HINTS = [
@@ -43,7 +46,7 @@ def _generate_one(backend, topic, direction_hint, literature_block, memory_block
         f"Guidance from last round's critiques: {meta_review_guidance or 'N/A (first round)'}"
     )
     parsed = call_with_json_retry(backend, "generation", _SYSTEM_PROMPT, user_prompt)
-    return Candidate(text=parsed["idea"], round_num=round_num, source_strategy="divergent")
+    return Candidate(text=render_idea(parsed), round_num=round_num, source_strategy="divergent", structured=parsed)
 
 
 async def generate_round(config, backend, memory, proximity, round_num: int, meta_review_guidance: str = "") -> list:

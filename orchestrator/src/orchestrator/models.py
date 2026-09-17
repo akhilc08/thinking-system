@@ -18,6 +18,11 @@ class Candidate:
     candidate_id: str = field(default_factory=new_id)
     elo: float = 1200.0
     embedding: list = None
+    # Structured idea fields (orchestrator.idea_schema.FIELD_KEYS), when the
+    # candidate was produced from the structured prompt contract. `text` is
+    # always the human-readable rendering of these fields (or a plain string
+    # for candidates with no structure, e.g. loaded from memory).
+    structured: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -49,6 +54,7 @@ class RunConfig:
     max_model_calls: int = 200
     duplicate_similarity_threshold: float = 0.92
     diverse_selection_similarity_threshold: float = 0.85
+    round_robin_debates: bool = False  # every non-duplicate pair debates once per round, instead of debate_pairs_per_round-capped adjacent-Elo pairing
     run_id: str = field(default_factory=new_id)
 
 

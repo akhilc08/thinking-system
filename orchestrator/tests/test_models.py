@@ -23,6 +23,7 @@ def test_run_config_defaults():
     assert config.backend_kind == "openrouter"
     assert config.rounds == 3
     assert config.k_final == 1
+    assert config.round_robin_debates is False
     assert config.run_id
 
 

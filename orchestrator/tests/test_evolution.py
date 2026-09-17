@@ -7,6 +7,13 @@ from orchestrator.evolution import evolve_round
 from orchestrator.models import Candidate
 
 
+def _idea_json(hypothesis):
+    return json.dumps({
+        "title": hypothesis, "problem": "p", "hypothesis": hypothesis, "mechanism": "m",
+        "method": "me", "prediction": "pr", "falsification": "f", "novelty_delta": "n",
+    })
+
+
 class _FakeBackend:
     def __init__(self, ideas):
         self.ideas = list(ideas)
@@ -15,7 +22,7 @@ class _FakeBackend:
     def call(self, role, system_prompt, user_prompt):
         idea = self.ideas[self.call_count]
         self.call_count += 1
-        return json.dumps({"idea": idea})
+        return _idea_json(idea)
 
 
 @pytest.mark.asyncio
