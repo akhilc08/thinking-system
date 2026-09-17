@@ -57,13 +57,27 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
             store.record_round_start(config.run_id, round_num)
 
             new_candidates = await generate_round(config, counting_backend, memory, proximity, round_num, meta_review_guidance)
+            for candidate in new_candidates:
+                store.save_candidate(config.run_id, candidate, status="active")
             pool.extend(new_candidates)
 
             critiques = await reflect_round(pool, counting_backend)
-            pool = filter_passed(pool, critiques)
+            for critique in critiques:
+                store.save_critique(config.run_id, critique)
+            survivors = filter_passed(pool, critiques)
+            survivor_ids = {c.candidate_id for c in survivors}
+            issues_by_id = {c.candidate_id: c.issues for c in critiques}
+            for candidate in pool:
+                if candidate.candidate_id not in survivor_ids:
+                    reason = "; ".join(issues_by_id.get(candidate.candidate_id, [])) or "failed reflection"
+                    store.save_candidate(config.run_id, candidate, status="pruned_reflection", pruned_reason=reason)
+            pool = survivors
 
             elo_before = {c.candidate_id: c.elo for c in pool}
-            debates = await rank_round(pool, counting_backend, proximity, config.debate_pairs_per_round)
+            debates = await rank_round(
+                pool, counting_backend, proximity, config.debate_pairs_per_round,
+                round_robin=config.round_robin_debates,
+            )
             by_id = {c.candidate_id: c for c in pool}
             for verdict in debates:
                 store.save_debate(
@@ -72,27 +86,43 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
                     (by_id[verdict.candidate_a_id].elo, by_id[verdict.candidate_b_id].elo),
                 )
 
-            pool = _trim_pool(pool, config.pool_size)
+            for candidate in pool:
+                store.save_candidate(config.run_id, candidate, status="active")
+                store.save_elo_snapshot(config.run_id, round_num, candidate.candidate_id, candidate.elo)
+
+            trimmed_pool = _trim_pool(pool, config.pool_size)
+            trimmed_ids = {c.candidate_id for c in trimmed_pool}
+            for candidate in pool:
+                if candidate.candidate_id not in trimmed_ids:
+                    store.save_candidate(config.run_id, candidate, status="pruned_pool_trim", pruned_reason="cut by pool_size cap")
+            pool = trimmed_pool
 
             evolved = await evolve_round(pool, counting_backend, round_num, config.topic)
+            for candidate in evolved:
+                store.save_candidate(config.run_id, candidate, status="active")
             pool.extend(evolved)
 
             meta_review_guidance = synthesize_meta_review(counting_backend, pool, critiques, debates)
 
             for candidate in pool:
-                store.save_candidate(config.run_id, candidate)
-            for critique in critiques:
-                store.save_critique(config.run_id, critique)
+                store.save_candidate(config.run_id, candidate, status="active")
             store.record_round_complete(config.run_id, round_num, meta_review_guidance)
     except CallBudgetExceeded:
         truncated = True
 
     for candidate in pool:
-        store.save_candidate(config.run_id, candidate)
+        store.save_candidate(config.run_id, candidate, status="active")
 
     proximity.compute_embeddings(pool)
     final_candidates = proximity.select_diverse_topk(pool, config.k_final, config.diverse_selection_similarity_threshold)
     store.save_final_selection(config.run_id, final_candidates)
+
+    final_ids = {c.candidate_id for c in final_candidates}
+    for candidate in pool:
+        store.save_candidate(
+            config.run_id, candidate,
+            status="selected_final" if candidate.candidate_id in final_ids else "not_selected_final",
+        )
 
     for candidate in final_candidates:
         memory.write(

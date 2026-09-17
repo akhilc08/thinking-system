@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS rounds (
 CREATE TABLE IF NOT EXISTS candidates (
     candidate_id TEXT PRIMARY KEY,
     run_id TEXT, round_num INTEGER, text TEXT,
-    source_strategy TEXT, parent_ids TEXT, elo REAL
+    source_strategy TEXT, parent_ids TEXT, elo REAL,
+    status TEXT NOT NULL DEFAULT 'active',
+    pruned_reason TEXT,
+    structured_json TEXT
 );
 CREATE TABLE IF NOT EXISTS critiques (
     candidate_id TEXT, run_id TEXT, passed INTEGER, issues TEXT
@@ -41,6 +44,10 @@ CREATE TABLE IF NOT EXISTS debates (
 );
 CREATE TABLE IF NOT EXISTS final_selection (
     run_id TEXT, rank INTEGER, candidate_id TEXT
+);
+CREATE TABLE IF NOT EXISTS elo_snapshots (
+    run_id TEXT, round_num INTEGER, candidate_id TEXT, elo REAL,
+    PRIMARY KEY (run_id, round_num, candidate_id)
 );
 """
 
@@ -54,6 +61,23 @@ class RunStore:
 
     def init_schema(self) -> None:
         self._conn.executescript(_SCHEMA)
+        self._conn.commit()
+        self._migrate()
+
+    def _migrate(self) -> None:
+        # CREATE TABLE IF NOT EXISTS only helps brand-new tables; a
+        # candidates table created before a column existed needs it added
+        # explicitly, or every insert against an older local .data/runs.db
+        # fails with "no column named ...".
+        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(candidates)")}
+        additions = {
+            "status": "TEXT NOT NULL DEFAULT 'active'",
+            "pruned_reason": "TEXT",
+            "structured_json": "TEXT",
+        }
+        for column, decl in additions.items():
+            if column not in existing:
+                self._conn.execute(f"ALTER TABLE candidates ADD COLUMN {column} {decl}")
         self._conn.commit()
 
     def create_run(self, config: RunConfig) -> None:
@@ -109,14 +133,24 @@ class RunStore:
         ).fetchone()
         return row[0] if row and row[0] is not None else ""
 
-    def save_candidate(self, run_id: str, candidate: Candidate) -> None:
+    def save_candidate(
+        self, run_id: str, candidate: Candidate, status: str = "active", pruned_reason: str | None = None
+    ) -> None:
         self._conn.execute(
-            "INSERT OR REPLACE INTO candidates (candidate_id, run_id, round_num, text, source_strategy, parent_ids, elo) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO candidates (candidate_id, run_id, round_num, text, source_strategy, "
+            "parent_ids, elo, status, pruned_reason, structured_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 candidate.candidate_id, run_id, candidate.round_num, candidate.text,
                 candidate.source_strategy, json.dumps(candidate.parent_ids), candidate.elo,
+                status, pruned_reason, json.dumps(candidate.structured or {}),
             ),
+        )
+        self._conn.commit()
+
+    def save_elo_snapshot(self, run_id: str, round_num: int, candidate_id: str, elo: float) -> None:
+        self._conn.execute(
+            "INSERT OR REPLACE INTO elo_snapshots (run_id, round_num, candidate_id, elo) VALUES (?, ?, ?, ?)",
+            (run_id, round_num, candidate_id, elo),
         )
         self._conn.commit()
 
@@ -152,16 +186,86 @@ class RunStore:
 
     def get_pool(self, run_id: str) -> list:
         rows = self._conn.execute(
-            "SELECT candidate_id, round_num, text, source_strategy, parent_ids, elo FROM candidates WHERE run_id = ?",
+            "SELECT candidate_id, round_num, text, source_strategy, parent_ids, elo, structured_json "
+            "FROM candidates WHERE run_id = ?",
             (run_id,),
         ).fetchall()
         return [
             Candidate(
                 candidate_id=row[0], round_num=row[1], text=row[2], source_strategy=row[3],
                 parent_ids=json.loads(row[4]), elo=row[5],
+                structured=json.loads(row[6]) if row[6] else {},
             )
             for row in rows
         ]
+
+    def get_run(self, run_id: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT run_id, topic, domain, subfield, status, total_model_calls, compute_multiplier "
+            "FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+        if not row:
+            return None
+        return dict(
+            run_id=row[0], topic=row[1], domain=row[2], subfield=row[3],
+            status=row[4], total_model_calls=row[5], compute_multiplier=row[6],
+        )
+
+    def get_rounds(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT round_num, status, meta_review_guidance FROM rounds WHERE run_id = ? ORDER BY round_num",
+            (run_id,),
+        ).fetchall()
+        return [dict(round_num=r[0], status=r[1], meta_review_guidance=r[2]) for r in rows]
+
+    def get_candidates_detailed(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT candidate_id, round_num, text, source_strategy, parent_ids, elo, status, pruned_reason, "
+            "structured_json FROM candidates WHERE run_id = ? ORDER BY round_num, elo DESC",
+            (run_id,),
+        ).fetchall()
+        return [
+            dict(
+                candidate_id=r[0], round_num=r[1], text=r[2], source_strategy=r[3],
+                parent_ids=json.loads(r[4]), elo=r[5], status=r[6], pruned_reason=r[7],
+                structured=json.loads(r[8]) if r[8] else {},
+            )
+            for r in rows
+        ]
+
+    def get_critiques(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT candidate_id, passed, issues FROM critiques WHERE run_id = ?", (run_id,)
+        ).fetchall()
+        return [dict(candidate_id=r[0], passed=bool(r[1]), issues=json.loads(r[2])) for r in rows]
+
+    def get_debates(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT round_num, candidate_a_id, candidate_b_id, winner_id, reasoning, "
+            "elo_a_before, elo_b_before, elo_a_after, elo_b_after FROM debates WHERE run_id = ? ORDER BY round_num",
+            (run_id,),
+        ).fetchall()
+        return [
+            dict(
+                round_num=r[0], candidate_a_id=r[1], candidate_b_id=r[2], winner_id=r[3], reasoning=r[4],
+                elo_a_before=r[5], elo_b_before=r[6], elo_a_after=r[7], elo_b_after=r[8],
+            )
+            for r in rows
+        ]
+
+    def get_elo_snapshots(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT round_num, candidate_id, elo FROM elo_snapshots WHERE run_id = ? ORDER BY round_num",
+            (run_id,),
+        ).fetchall()
+        return [dict(round_num=r[0], candidate_id=r[1], elo=r[2]) for r in rows]
+
+    def get_final_selection(self, run_id: str) -> list:
+        rows = self._conn.execute(
+            "SELECT rank, candidate_id FROM final_selection WHERE run_id = ? ORDER BY rank", (run_id,)
+        ).fetchall()
+        return [dict(rank=r[0], candidate_id=r[1]) for r in rows]
 
     def close(self) -> None:
         self._conn.close()

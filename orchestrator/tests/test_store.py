@@ -83,6 +83,61 @@ def test_save_debate_records_elo_history(tmp_path):
     assert row == ("a", 1216.0, 1184.0)
 
 
+def test_init_schema_migrates_a_pre_existing_candidates_table(tmp_path):
+    db_path = tmp_path / "test.db"
+    # Simulate a .data/runs.db created before status/pruned_reason/structured_json existed.
+    import sqlite3
+    conn = sqlite3.connect(str(db_path))
+    conn.execute(
+        "CREATE TABLE candidates (candidate_id TEXT PRIMARY KEY, run_id TEXT, round_num INTEGER, "
+        "text TEXT, source_strategy TEXT, parent_ids TEXT, elo REAL)"
+    )
+    conn.commit()
+    conn.close()
+
+    store = RunStore(db_path)  # should migrate, not crash
+    config = _config()
+    store.create_run(config)
+    c = Candidate(text="idea", round_num=1, source_strategy="divergent", structured={"hypothesis": "h"})
+    store.save_candidate(config.run_id, c, status="active", pruned_reason=None)
+
+    detailed = store.get_candidates_detailed(config.run_id)
+    assert detailed[0]["status"] == "active"
+    assert detailed[0]["structured"] == {"hypothesis": "h"}
+
+
+def test_save_candidate_tracks_status_and_pruned_reason(tmp_path):
+    store = RunStore(tmp_path / "test.db")
+    config = _config()
+    store.create_run(config)
+
+    kept = Candidate(text="idea kept", round_num=1, source_strategy="divergent", elo=1220.0)
+    pruned = Candidate(text="idea pruned", round_num=1, source_strategy="divergent", elo=1180.0)
+    store.save_candidate(config.run_id, kept, status="active")
+    store.save_candidate(config.run_id, pruned, status="pruned_reflection", pruned_reason="incoherent")
+
+    detailed = {c["candidate_id"]: c for c in store.get_candidates_detailed(config.run_id)}
+    assert detailed[kept.candidate_id]["status"] == "active"
+    assert detailed[kept.candidate_id]["pruned_reason"] is None
+    assert detailed[pruned.candidate_id]["status"] == "pruned_reflection"
+    assert detailed[pruned.candidate_id]["pruned_reason"] == "incoherent"
+
+    # get_pool still returns every row regardless of status (pruned ideas stay visible)
+    assert len(store.get_pool(config.run_id)) == 2
+
+
+def test_elo_snapshots_recorded_per_round(tmp_path):
+    store = RunStore(tmp_path / "test.db")
+    config = _config()
+    store.create_run(config)
+
+    store.save_elo_snapshot(config.run_id, 1, "c1", 1216.0)
+    store.save_elo_snapshot(config.run_id, 2, "c1", 1232.0)
+
+    snapshots = store.get_elo_snapshots(config.run_id)
+    assert [(s["round_num"], s["elo"]) for s in snapshots] == [(1, 1216.0), (2, 1232.0)]
+
+
 def test_save_final_selection_and_mark_completed(tmp_path):
     store = RunStore(tmp_path / "test.db")
     config = _config()
