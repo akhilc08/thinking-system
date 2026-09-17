@@ -50,6 +50,22 @@ class Proximity:
                 break
         return pairs
 
+    def pick_all_pairs(self, pool: list, duplicate_threshold: float = 0.92) -> list:
+        """Every non-duplicate pair in the pool, once each (round-robin) --
+        unlike pick_debate_pairs, a candidate can appear in more than one
+        pair. Quadratic in pool size by design.
+        """
+        pairs = []
+        for i, candidate in enumerate(pool):
+            for other in pool[i + 1:]:
+                if (
+                    candidate.embedding is not None and other.embedding is not None
+                    and cosine_similarity(candidate.embedding, other.embedding) >= duplicate_threshold
+                ):
+                    continue
+                pairs.append((candidate, other))
+        return pairs
+
     def select_diverse_topk(self, ranked_pool: list, k: int, threshold: float) -> list:
         by_elo = sorted(ranked_pool, key=lambda c: c.elo, reverse=True)
         selected = []

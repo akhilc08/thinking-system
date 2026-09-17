@@ -68,22 +68,24 @@ def _apply_verdict(candidate_a, candidate_b, verdict: DebateVerdict) -> None:
     candidate_a.elo, candidate_b.elo = new_a, new_b
 
 
-async def rank_round(pool: list, backend, proximity, n_pairs: int) -> list:
+async def rank_round(pool: list, backend, proximity, n_pairs: int, round_robin: bool = False) -> list:
     """Run a round of ranking debates and apply verdicts.
 
-    Conducts pairwise debates between candidates selected by proximity.pick_debate_pairs.
+    Conducts pairwise debates between candidates selected by proximity.pick_debate_pairs
+    (or, when round_robin is set, every non-duplicate pair via proximity.pick_all_pairs).
     Each debate updates the Elo ratings of both candidates.
 
     Args:
         pool: List of Candidate objects to rank
         backend: Backend object for LLM calls
-        proximity: Object with pick_debate_pairs(pool, n_pairs) -> list of (candidate_a, candidate_b) pairs
-        n_pairs: Number of debate pairs to conduct
+        proximity: Object with pick_debate_pairs(pool, n_pairs) and pick_all_pairs(pool)
+        n_pairs: Number of debate pairs to conduct (ignored when round_robin is set)
+        round_robin: debate every non-duplicate pair once instead of a capped set
 
     Returns:
         list of DebateVerdict objects from all debates (verdicts are in order of pairs)
     """
-    pairs = proximity.pick_debate_pairs(pool, n_pairs)
+    pairs = proximity.pick_all_pairs(pool) if round_robin else proximity.pick_debate_pairs(pool, n_pairs)
     verdicts = list(await asyncio.gather(*[
         asyncio.to_thread(_debate_one, backend, a, b) for a, b in pairs
     ]))

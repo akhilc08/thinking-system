@@ -40,3 +40,23 @@ async def test_rank_round_applies_verdicts_to_candidate_elo():
     assert verdicts[0].winner_id == a.candidate_id
     assert a.elo > 1200.0
     assert b.elo < 1200.0
+    proximity.pick_all_pairs.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_rank_round_round_robin_uses_pick_all_pairs_and_ignores_n_pairs():
+    a = Candidate(text="A", round_num=1, source_strategy="divergent", elo=1200.0)
+    b = Candidate(text="B", round_num=1, source_strategy="divergent", elo=1200.0)
+    c = Candidate(text="C", round_num=1, source_strategy="divergent", elo=1200.0)
+
+    backend = Mock()
+    backend.call.return_value = json.dumps({"winner": "A", "reasoning": "stronger"})
+
+    proximity = Mock()
+    proximity.pick_all_pairs.return_value = [(a, b), (a, c), (b, c)]
+
+    verdicts = await rank_round([a, b, c], backend, proximity, n_pairs=1, round_robin=True)
+
+    assert len(verdicts) == 3
+    proximity.pick_all_pairs.assert_called_once_with([a, b, c])
+    proximity.pick_debate_pairs.assert_not_called()

@@ -49,6 +49,32 @@ def test_pick_debate_pairs_pairs_adjacent_elo_and_skips_duplicates():
     assert b.candidate_id not in ids_in_pair or a.candidate_id not in ids_in_pair  # A and B never paired together
 
 
+def test_pick_all_pairs_returns_every_non_duplicate_pair_once():
+    a = _candidate("A", elo=1300.0, embedding=[1.0, 0.0])
+    b = _candidate("B", elo=1290.0, embedding=[1.0, 0.0001])  # near-duplicate of A
+    c = _candidate("C", elo=1280.0, embedding=[0.0, 1.0])
+    proximity = Proximity(Mock())
+
+    pairs = proximity.pick_all_pairs([a, b, c], duplicate_threshold=0.99)
+
+    ids = [{p[0].candidate_id, p[1].candidate_id} for p in pairs]
+    assert {a.candidate_id, c.candidate_id} in ids
+    assert {b.candidate_id, c.candidate_id} in ids
+    assert {a.candidate_id, b.candidate_id} not in ids  # skipped as near-duplicate
+    assert len(pairs) == 2
+
+
+def test_pick_all_pairs_lets_a_candidate_appear_in_multiple_pairs():
+    a = _candidate("A", embedding=[1.0, 0.0])
+    b = _candidate("B", embedding=[0.0, 1.0])
+    c = _candidate("C", embedding=[0.0, -1.0])
+    proximity = Proximity(Mock())
+
+    pairs = proximity.pick_all_pairs([a, b, c], duplicate_threshold=0.99)
+
+    assert len(pairs) == 3  # C(3,2) -- a full round-robin, not one use per candidate
+
+
 def test_select_diverse_topk_skips_near_duplicates_and_stops_at_k():
     a = _candidate("A", elo=1300.0, embedding=[1.0, 0.0])
     b = _candidate("B", elo=1290.0, embedding=[1.0, 0.0001])  # near-dup of A
