@@ -49,7 +49,7 @@ class RunConfig:
     rounds: int = 3
     pool_size: int = 24
     n_divergent_per_round: int = 6
-    debate_pairs_per_round: int = 8
+    debate_pairs_per_round: int = 12
     k_final: int = 1
     max_model_calls: int = 200
     duplicate_similarity_threshold: float = 0.92
