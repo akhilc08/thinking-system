@@ -40,12 +40,6 @@ async def test_run_supervisor_completes_and_threads_meta_review_guidance(tmp_pat
         generate_calls.append(meta_review_guidance)
         return [_candidate(f"idea round {round_num}")]
 
-    async def fake_reflect_round(pool, backend):
-        return []
-
-    def fake_filter_passed(pool, critiques):
-        return pool
-
     async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
         return []
 
@@ -53,8 +47,6 @@ async def test_run_supervisor_completes_and_threads_meta_review_guidance(tmp_pat
         return []
 
     with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
-         patch("orchestrator.supervisor.reflect_round", fake_reflect_round), \
-         patch("orchestrator.supervisor.filter_passed", fake_filter_passed), \
          patch("orchestrator.supervisor.rank_round", fake_rank_round), \
          patch("orchestrator.supervisor.evolve_round", fake_evolve_round), \
          patch("orchestrator.supervisor.synthesize_meta_review", return_value="guidance from this round"):
@@ -119,12 +111,6 @@ async def test_run_supervisor_resumes_with_prior_meta_review_guidance(tmp_path):
         generate_calls.append(meta_review_guidance)
         return [_candidate(f"idea round {round_num}")]
 
-    async def fake_reflect_round(pool, backend):
-        return []
-
-    def fake_filter_passed(pool, critiques):
-        return pool
-
     async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
         return []
 
@@ -132,8 +118,6 @@ async def test_run_supervisor_resumes_with_prior_meta_review_guidance(tmp_path):
         return []
 
     with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
-         patch("orchestrator.supervisor.reflect_round", fake_reflect_round), \
-         patch("orchestrator.supervisor.filter_passed", fake_filter_passed), \
          patch("orchestrator.supervisor.rank_round", fake_rank_round), \
          patch("orchestrator.supervisor.evolve_round", fake_evolve_round), \
          patch("orchestrator.supervisor.synthesize_meta_review", return_value="guidance from round 2"):
@@ -153,61 +137,18 @@ async def test_run_supervisor_persists_pool_candidates_when_truncated(tmp_path):
         backend.call("generation", "sys", "usr")  # consumes the single allotted call
         return [_candidate("idea that should be persisted")]
 
-    async def fake_reflect_round(pool, backend):
-        backend.call("reflection", "sys", "usr")  # exceeds the budget
+    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
+        backend.call("ranking", "sys", "usr")  # exceeds the budget
         return []
 
     with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
-         patch("orchestrator.supervisor.reflect_round", fake_reflect_round):
+         patch("orchestrator.supervisor.rank_round", fake_rank_round):
         summary = await run_supervisor(config, Mock(), _fake_embedding_backend(), store, memory)
 
     assert summary.status == "truncated_call_budget"
     persisted = store.get_pool(config.run_id)
     assert len(persisted) == 1
     assert persisted[0].text == "idea that should be persisted"
-
-
-@pytest.mark.asyncio
-async def test_run_supervisor_persists_reflection_pruned_candidates(tmp_path):
-    store = RunStore(tmp_path / "test.db")
-    memory = MemoryStore(tmp_path / "test.db")
-    config = _config(rounds=1)
-
-    kept = _candidate("survives reflection")
-    pruned = _candidate("fails reflection")
-
-    async def fake_generate_round(cfg, backend, mem, prox, round_num, meta_review_guidance=""):
-        return [kept, pruned]
-
-    async def fake_reflect_round(pool, backend):
-        from orchestrator.models import CritiqueResult
-        return [
-            CritiqueResult(candidate_id=kept.candidate_id, passed=True, issues=[]),
-            CritiqueResult(candidate_id=pruned.candidate_id, passed=False, issues=["too vague"]),
-        ]
-
-    def fake_filter_passed(pool, critiques):
-        passed_ids = {c.candidate_id for c in critiques if c.passed}
-        return [c for c in pool if c.candidate_id in passed_ids]
-
-    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
-        return []
-
-    async def fake_evolve_round(pool, backend, round_num, topic):
-        return []
-
-    with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
-         patch("orchestrator.supervisor.reflect_round", fake_reflect_round), \
-         patch("orchestrator.supervisor.filter_passed", fake_filter_passed), \
-         patch("orchestrator.supervisor.rank_round", fake_rank_round), \
-         patch("orchestrator.supervisor.evolve_round", fake_evolve_round), \
-         patch("orchestrator.supervisor.synthesize_meta_review", return_value=""):
-        await run_supervisor(config, Mock(), _fake_embedding_backend(), store, memory)
-
-    detailed = {c["candidate_id"]: c for c in store.get_candidates_detailed(config.run_id)}
-    assert detailed[pruned.candidate_id]["status"] == "pruned_reflection"
-    assert detailed[pruned.candidate_id]["pruned_reason"] == "too vague"
-    assert detailed[kept.candidate_id]["status"] in ("active", "selected_final", "not_selected_final")
 
 
 def test_counting_backend_raises_past_budget():

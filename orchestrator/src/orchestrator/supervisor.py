@@ -8,7 +8,6 @@ from orchestrator.meta_review import synthesize_meta_review
 from orchestrator.models import MemoryEntry, RunSummary
 from orchestrator.proximity import Proximity
 from orchestrator.ranking import rank_round
-from orchestrator.reflection import filter_passed, reflect_round
 
 AGENTIDEABENCH_ACTIVE_BUDGET = 10
 
@@ -61,18 +60,6 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
                 store.save_candidate(config.run_id, candidate, status="active")
             pool.extend(new_candidates)
 
-            critiques = await reflect_round(pool, counting_backend)
-            for critique in critiques:
-                store.save_critique(config.run_id, critique)
-            survivors = filter_passed(pool, critiques)
-            survivor_ids = {c.candidate_id for c in survivors}
-            issues_by_id = {c.candidate_id: c.issues for c in critiques}
-            for candidate in pool:
-                if candidate.candidate_id not in survivor_ids:
-                    reason = "; ".join(issues_by_id.get(candidate.candidate_id, [])) or "failed reflection"
-                    store.save_candidate(config.run_id, candidate, status="pruned_reflection", pruned_reason=reason)
-            pool = survivors
-
             elo_before = {c.candidate_id: c.elo for c in pool}
             debates = await rank_round(
                 pool, counting_backend, proximity, config.debate_pairs_per_round,
@@ -102,7 +89,7 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
                 store.save_candidate(config.run_id, candidate, status="active")
             pool.extend(evolved)
 
-            meta_review_guidance = synthesize_meta_review(counting_backend, pool, critiques, debates)
+            meta_review_guidance = synthesize_meta_review(counting_backend, pool, [], debates)
 
             for candidate in pool:
                 store.save_candidate(config.run_id, candidate, status="active")
