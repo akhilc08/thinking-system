@@ -1,8 +1,16 @@
-"""Evolution stage (spec §5.2, §9): five named mutation strategies applied
-to the top of the ranked pool each round. Deliberate divergence is
-mandatory every round — the only lever in the pipeline that reliably
-produces novelty (AgentIdeaBench found retrieval improves
-feasibility/clarity but not originality).
+"""Evolution stage (spec §5.2, §9): named mutation strategies applied to the
+top of the ranked pool each round. Deliberate divergence is mandatory every
+round — the only lever in the pipeline that reliably produces novelty
+(AgentIdeaBench found retrieval improves feasibility/clarity but not
+originality).
+
+`simplify` was dropped (2026-09-23): across 39 real AgentIdeaBench subfields
+it had a 0% win rate (0/117 selected as a final idea), the only strategy
+with zero wins, vs. `combine`'s 34.2% -- the rubric weights Originality 2x
+and Specificity/Impact heavily, and simplifying an idea works directly
+against that. Replaced with a second `combine` pass over a different
+ranking window, since `combine` was the strongest performer by a wide
+margin.
 """
 import asyncio
 
@@ -21,15 +29,6 @@ def _combine(backend, top: list, round_num: int) -> Candidate:
     return Candidate(
         text=render_idea(parsed), round_num=round_num, source_strategy="combine",
         parent_ids=[c.candidate_id for c in top], structured=parsed,
-    )
-
-
-def _simplify(backend, candidate, round_num: int) -> Candidate:
-    prompt = f"Rewrite this hypothesis to be simpler and more directly testable:\n{candidate.text}\n\n{RESPONSE_FORMAT}"
-    parsed = call_with_json_retry(backend, "evolution_simplify", "You are an Evolution agent: simplify.", prompt)
-    return Candidate(
-        text=render_idea(parsed), round_num=round_num, source_strategy="simplify",
-        parent_ids=[candidate.candidate_id], structured=parsed,
     )
 
 
@@ -75,7 +74,12 @@ async def evolve_round(pool: list, backend, round_num: int, topic: str) -> list:
     tasks = [asyncio.to_thread(_deliberate_divergence, backend, pool, topic, round_num)]
     if len(top3) >= 2:
         tasks.append(asyncio.to_thread(_combine, backend, top3, round_num))
-    tasks.append(asyncio.to_thread(_simplify, backend, best, round_num))
+    if len(top) >= 4:
+        # A second combine over a distinct window (ranks 2-4), not a repeat
+        # of the first -- combine was the strongest strategy by a wide
+        # margin (see module docstring), so it gets a second pass instead
+        # of the dropped `simplify`.
+        tasks.append(asyncio.to_thread(_combine, backend, top[1:4], round_num))
     tasks.append(asyncio.to_thread(_ground_in_literature, backend, best, topic, round_num))
     tasks.append(asyncio.to_thread(_analogical, backend, best, round_num))
 

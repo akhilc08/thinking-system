@@ -13,7 +13,7 @@ def new_id() -> str:
 class Candidate:
     text: str
     round_num: int
-    source_strategy: str  # "divergent" | "combine" | "simplify" | "ground_in_literature" | "analogical" | "deliberate_divergence"
+    source_strategy: str  # "divergent" | "combine" | "ground_in_literature" | "analogical" | "deliberate_divergence"
     parent_ids: list = field(default_factory=list)
     candidate_id: str = field(default_factory=new_id)
     elo: float = 1200.0
