@@ -32,11 +32,11 @@ def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")[:60]
 
 
-def run_generation(domain: str, subfield: str, export_path: Path) -> dict:
+def run_generation(domain: str, subfield: str, export_path: Path, pool_size: int = 4) -> dict:
     cmd = [
         str(ORCH_PY), "-m", "orchestrator.cli",
         "--topic", subfield, "--domain", domain, "--subfield", subfield,
-        "--backend", "claude_code", "--rounds", "3", "--k", "3", "--pool-size", "4",
+        "--backend", "claude_code", "--rounds", "3", "--k", "3", "--pool-size", str(pool_size),
         "--export", str(export_path),
     ]
     env = {"PYTHONPATH": "src:."}
@@ -78,6 +78,7 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=5)
     parser.add_argument("--subfields", help="Comma-separated exact subdomain names to run instead of --start/--count")
     parser.add_argument("--tag", default="sweep", help="Namespaces export/summary files under runs/<tag>/ (default 'sweep', the real 40-subfield run)")
+    parser.add_argument("--pool-size", type=int, default=4, help="Passed through to orchestrator.cli --pool-size")
     args = parser.parse_args()
 
     sweep_dir = ORCH_DIR / "runs" / args.tag
@@ -117,10 +118,10 @@ def main() -> None:
 
         print(f"\n=== {domain} | {subfield} ===")
         print("generating...")
-        gen = run_generation(domain, subfield, export_path)
+        gen = run_generation(domain, subfield, export_path, args.pool_size)
         if (gen["returncode"] != 0 or not export_path.exists()):
             print("generation failed once, retrying...")
-            gen = run_generation(domain, subfield, export_path)
+            gen = run_generation(domain, subfield, export_path, args.pool_size)
         if gen["returncode"] != 0 or not export_path.exists():
             print("GENERATION FAILED (twice):", gen["stderr"][-1500:])
             record({"domain": domain, "subdomain": subfield, "status": "generation_failed"})
