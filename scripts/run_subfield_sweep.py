@@ -78,7 +78,7 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=5)
     parser.add_argument("--subfields", help="Comma-separated exact subdomain names to run instead of --start/--count")
     parser.add_argument("--tag", default="sweep", help="Namespaces export/summary files under runs/<tag>/ (default 'sweep', the real 40-subfield run)")
-    parser.add_argument("--pool-size", type=int, default=4, help="Passed through to orchestrator.cli --pool-size")
+    parser.add_argument("--pool-size", type=int, default=6, help="Passed through to orchestrator.cli --pool-size")
     args = parser.parse_args()
 
     sweep_dir = ORCH_DIR / "runs" / args.tag
