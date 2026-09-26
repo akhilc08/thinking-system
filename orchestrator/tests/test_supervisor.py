@@ -40,10 +40,10 @@ async def test_run_supervisor_completes_and_threads_meta_review_guidance(tmp_pat
         generate_calls.append(meta_review_guidance)
         return [_candidate(f"idea round {round_num}")]
 
-    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
+    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False, brief=""):
         return []
 
-    async def fake_evolve_round(pool, backend, round_num, topic):
+    async def fake_evolve_round(pool, backend, round_num, topic, brief=""):
         return []
 
     with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
@@ -111,10 +111,10 @@ async def test_run_supervisor_resumes_with_prior_meta_review_guidance(tmp_path):
         generate_calls.append(meta_review_guidance)
         return [_candidate(f"idea round {round_num}")]
 
-    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
+    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False, brief=""):
         return []
 
-    async def fake_evolve_round(pool, backend, round_num, topic):
+    async def fake_evolve_round(pool, backend, round_num, topic, brief=""):
         return []
 
     with patch("orchestrator.supervisor.generate_round", fake_generate_round), \
@@ -137,7 +137,7 @@ async def test_run_supervisor_persists_pool_candidates_when_truncated(tmp_path):
         backend.call("generation", "sys", "usr")  # consumes the single allotted call
         return [_candidate("idea that should be persisted")]
 
-    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False):
+    async def fake_rank_round(pool, backend, proximity, n_pairs, round_robin=False, brief=""):
         backend.call("ranking", "sys", "usr")  # exceeds the budget
         return []
 
