@@ -54,6 +54,7 @@ class RunConfig:
     max_model_calls: int = 200
     duplicate_similarity_threshold: float = 0.92
     diverse_selection_similarity_threshold: float = 0.85
+    brief: str = ""  # extra requester constraints shown to generation, evolution and the debate judge; never sent to literature search
     round_robin_debates: bool = False  # every non-duplicate pair debates once per round, instead of debate_pairs_per_round-capped adjacent-Elo pairing
     run_id: str = field(default_factory=new_id)
 
