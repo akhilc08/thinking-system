@@ -14,6 +14,7 @@ margin.
 """
 import asyncio
 
+from orchestrator.generation import with_brief
 from orchestrator.idea_schema import RESPONSE_FORMAT, render_idea
 from orchestrator.json_utils import call_with_json_retry
 from orchestrator.models import Candidate
@@ -64,14 +65,14 @@ def _deliberate_divergence(backend, pool: list, topic: str, round_num: int) -> C
     )
 
 
-async def evolve_round(pool: list, backend, round_num: int, topic: str) -> list:
+async def evolve_round(pool: list, backend, round_num: int, topic: str, brief: str = "") -> list:
     if not pool:
         return []
     top = sorted(pool, key=lambda c: c.elo, reverse=True)
     top3 = top[:3]
     best = top[0]
 
-    tasks = [asyncio.to_thread(_deliberate_divergence, backend, pool, topic, round_num)]
+    tasks = [asyncio.to_thread(_deliberate_divergence, backend, pool, with_brief(topic, brief), round_num)]
     if len(top3) >= 2:
         tasks.append(asyncio.to_thread(_combine, backend, top3, round_num))
     if len(top) >= 4:
