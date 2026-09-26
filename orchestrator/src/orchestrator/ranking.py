@@ -35,7 +35,7 @@ def elo_update(rating_a: float, rating_b: float, winner: str, k_factor: float = 
     return new_a, new_b
 
 
-def _debate_one(backend, candidate_a, candidate_b) -> DebateVerdict:
+def _debate_one(backend, candidate_a, candidate_b, brief: str = "") -> DebateVerdict:
     """Run a single debate between two candidates.
 
     Args:
@@ -47,6 +47,8 @@ def _debate_one(backend, candidate_a, candidate_b) -> DebateVerdict:
         DebateVerdict with winner_id and reasoning
     """
     user_prompt = f"Hypothesis A: {candidate_a.text}\n\nHypothesis B: {candidate_b.text}"
+    if brief:
+        user_prompt = f"Requester constraints (weigh these heavily): {brief}\n\n{user_prompt}"
     parsed = call_with_json_retry(backend, "ranking", _SYSTEM_PROMPT, user_prompt)
     winner_id = candidate_a.candidate_id if parsed["winner"] == "A" else candidate_b.candidate_id
     return DebateVerdict(
@@ -68,7 +70,7 @@ def _apply_verdict(candidate_a, candidate_b, verdict: DebateVerdict) -> None:
     candidate_a.elo, candidate_b.elo = new_a, new_b
 
 
-async def rank_round(pool: list, backend, proximity, n_pairs: int, round_robin: bool = False) -> list:
+async def rank_round(pool: list, backend, proximity, n_pairs: int, round_robin: bool = False, brief: str = "") -> list:
     """Run a round of ranking debates and apply verdicts.
 
     Conducts pairwise debates between candidates selected by proximity.pick_debate_pairs
@@ -87,7 +89,7 @@ async def rank_round(pool: list, backend, proximity, n_pairs: int, round_robin: 
     """
     pairs = proximity.pick_all_pairs(pool) if round_robin else proximity.pick_debate_pairs(pool, n_pairs)
     verdicts = list(await asyncio.gather(*[
-        asyncio.to_thread(_debate_one, backend, a, b) for a, b in pairs
+        asyncio.to_thread(_debate_one, backend, a, b, brief) for a, b in pairs
     ]))
     for (candidate_a, candidate_b), verdict in zip(pairs, verdicts):
         _apply_verdict(candidate_a, candidate_b, verdict)
