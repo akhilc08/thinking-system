@@ -33,6 +33,7 @@ def main() -> None:
     parser.add_argument("--pool-size", type=int, default=24, help="Max survivors kept after each round's debate (lower = more aggressive cutting)")
     parser.add_argument("--max-calls", type=int, default=200, help="Hard cap on model calls for the whole run")
     parser.add_argument("--round-robin", action="store_true", help="Debate every non-duplicate pair in the pool each round instead of a capped adjacent-Elo set (quadratic in pool size)")
+    parser.add_argument("--brief", default="", help="Extra constraints (e.g. deadline, budget) shown to generation, evolution and the debate judge, but not used as the literature search query")
     parser.add_argument("--export", help="Write full run history (all candidates incl. pruned, Elo snapshots, debates) as JSON to this path")
     args = parser.parse_args()
 
@@ -40,7 +41,7 @@ def main() -> None:
         topic=args.topic, domain=args.domain, subfield=args.subfield,
         backend_kind=args.backend, rounds=args.rounds, k_final=args.k,
         pool_size=args.pool_size, max_model_calls=args.max_calls,
-        round_robin_debates=args.round_robin,
+        round_robin_debates=args.round_robin, brief=args.brief,
     )
     backend = build_backend(args.backend)
     embedding_backend = SentenceTransformerBackend()
