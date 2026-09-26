@@ -27,6 +27,10 @@ _DIRECTION_HINTS = [
 ]
 
 
+def with_brief(topic: str, brief: str) -> str:
+    return f"{topic}\nRequester constraints: {brief}" if brief else topic
+
+
 def _build_memory_context(memory, domain: str, subfield: str) -> str:
     entries = memory.query(domain, subfield)
     if not entries:
@@ -57,7 +61,7 @@ async def generate_round(config, backend, memory, proximity, round_num: int, met
     hints = [_DIRECTION_HINTS[i % len(_DIRECTION_HINTS)] for i in range(config.n_divergent_per_round)]
     raw_candidates = list(await asyncio.gather(*[
         asyncio.to_thread(
-            _generate_one, backend, config.topic, hint, literature_block, memory_block,
+            _generate_one, backend, with_brief(config.topic, config.brief), hint, literature_block, memory_block,
             meta_review_guidance, round_num,
         )
         for hint in hints
