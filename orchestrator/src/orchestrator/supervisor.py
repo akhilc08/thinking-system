@@ -63,7 +63,7 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
             elo_before = {c.candidate_id: c.elo for c in pool}
             debates = await rank_round(
                 pool, counting_backend, proximity, config.debate_pairs_per_round,
-                round_robin=config.round_robin_debates,
+                round_robin=config.round_robin_debates, brief=config.brief,
             )
             by_id = {c.candidate_id: c for c in pool}
             for verdict in debates:
@@ -84,7 +84,7 @@ async def run_supervisor(config, backend, embedding_backend, store, memory) -> R
                     store.save_candidate(config.run_id, candidate, status="pruned_pool_trim", pruned_reason="cut by pool_size cap")
             pool = trimmed_pool
 
-            evolved = await evolve_round(pool, counting_backend, round_num, config.topic)
+            evolved = await evolve_round(pool, counting_backend, round_num, config.topic, brief=config.brief)
             for candidate in evolved:
                 store.save_candidate(config.run_id, candidate, status="active")
             pool.extend(evolved)
