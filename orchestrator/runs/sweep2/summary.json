@@ -1,0 +1,358 @@
+[
+  {
+    "domain": "Biology",
+    "subdomain": "CRISPR base editing prime editing genome therapeutic",
+    "our_final3_avg": 7.787878787878788,
+    "published_static_sonnet5": 5.378787878787879,
+    "published_active_sonnet5": 5.969696969696969,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "antibody engineering affinity maturation therapeutic",
+    "our_final3_avg": 7.742424242424242,
+    "published_static_sonnet5": 6.424242424242425,
+    "published_active_sonnet5": 6.5,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "cell-free protein synthesis in vitro transcription translation",
+    "our_final3_avg": 6.833333333333333,
+    "published_static_sonnet5": 5.6060606060606055,
+    "published_active_sonnet5": 5.666666666666667,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "circadian rhythm clock gene physiology regulation",
+    "our_final3_avg": 7.575757575757575,
+    "published_static_sonnet5": 6.848484848484849,
+    "published_active_sonnet5": 7.393939393939394,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "lipid nanoparticle mRNA delivery transfection",
+    "our_final3_avg": 7.6060606060606055,
+    "published_static_sonnet5": 7.287878787878788,
+    "published_active_sonnet5": 6.0,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "neural circuit connectome behavior mapping",
+    "our_final3_avg": 7.757575757575758,
+    "published_static_sonnet5": 6.424242424242425,
+    "published_active_sonnet5": 7.287878787878788,
+    "total_model_calls": 58,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "protein structure prediction binding interaction",
+    "our_final3_avg": 7.6818181818181825,
+    "published_static_sonnet5": 6.409090909090909,
+    "published_active_sonnet5": 6.287878787878788,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "spatial proteomics tissue imaging multiplex",
+    "our_final3_avg": 7.984848484848484,
+    "published_static_sonnet5": 6.257575757575758,
+    "published_active_sonnet5": 6.651515151515151,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "3D scene understanding neural radiance field",
+    "our_final3_avg": 7.545454545454546,
+    "published_static_sonnet5": 6.5,
+    "published_active_sonnet5": 6.621212121212121,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "adversarial robustness machine learning defense",
+    "our_final3_avg": 7.787878787878788,
+    "published_static_sonnet5": 6.196969696969696,
+    "published_active_sonnet5": 6.378787878787879,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "continual learning catastrophic forgetting",
+    "our_final3_avg": 7.984848484848484,
+    "published_static_sonnet5": 7.196969696969696,
+    "published_active_sonnet5": 6.727272727272727,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "federated learning privacy distributed training",
+    "our_final3_avg": 7.939393939393939,
+    "published_static_sonnet5": 3.9393939393939394,
+    "published_active_sonnet5": 6.606060606060606,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "large language model reasoning chain of thought",
+    "our_final3_avg": 7.7727272727272725,
+    "published_static_sonnet5": 6.696969696969696,
+    "published_active_sonnet5": 7.439393939393939,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "neural architecture search efficient model",
+    "our_final3_avg": 7.651515151515151,
+    "published_static_sonnet5": 5.515151515151516,
+    "published_active_sonnet5": 7.03030303030303,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "self-supervised representation learning contrastive",
+    "our_final3_avg": 7.636363636363637,
+    "published_static_sonnet5": 7.075757575757575,
+    "published_active_sonnet5": 7.030303030303031,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "time series forecasting deep learning",
+    "our_final3_avg": 7.909090909090909,
+    "published_static_sonnet5": 6.545454545454546,
+    "published_active_sonnet5": 6.484848484848484,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "asymmetric organocatalysis enantioselective synthesis",
+    "our_final3_avg": 7.924242424242425,
+    "published_static_sonnet5": 5.318181818181818,
+    "published_active_sonnet5": 6.742424242424242,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "carbon capture sequestration amine sorbent",
+    "our_final3_avg": 7.06060606060606,
+    "published_static_sonnet5": 6.166666666666667,
+    "published_active_sonnet5": 6.6060606060606055,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "electrocatalysis CO2 reduction reaction mechanism",
+    "our_final3_avg": 7.424242424242425,
+    "published_static_sonnet5": 6.196969696969696,
+    "published_active_sonnet5": 7.075757575757575,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "enzyme catalysis directed evolution biotransformation",
+    "our_final3_avg": 7.378787878787879,
+    "published_static_sonnet5": 6.060606060606061,
+    "published_active_sonnet5": 7.151515151515151,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "mass spectrometry metabolomics analytical detection",
+    "our_final3_avg": 7.7727272727272725,
+    "published_static_sonnet5": 5.196969696969696,
+    "published_active_sonnet5": 7.075757575757575,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "molecular machine rotaxane catenane switch",
+    "our_final3_avg": 7.696969696969698,
+    "published_static_sonnet5": 6.257575757575758,
+    "published_active_sonnet5": 7.515151515151516,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "photocatalysis solar fuel hydrogen water splitting",
+    "our_final3_avg": 7.6060606060606055,
+    "published_static_sonnet5": 5.03030303030303,
+    "published_active_sonnet5": 6.545454545454546,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "single-atom catalyst heterogeneous active site",
+    "our_final3_avg": 7.0,
+    "published_static_sonnet5": 6.939393939393939,
+    "published_active_sonnet5": 7.075757575757575,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "COVID-19 long PASC post-acute sequelae mechanism",
+    "our_final3_avg": 7.3181818181818175,
+    "published_static_sonnet5": 5.378787878787879,
+    "published_active_sonnet5": 7.06060606060606,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "diabetes insulin resistance metabolic syndrome",
+    "our_final3_avg": 7.393939393939394,
+    "published_static_sonnet5": 7.075757575757575,
+    "published_active_sonnet5": 7.424242424242425,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "neurodegeneration Alzheimer tau biomarker progression",
+    "our_final3_avg": 7.515151515151516,
+    "published_static_sonnet5": 6.257575757575758,
+    "published_active_sonnet5": 7.015151515151516,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "pediatric oncology novel therapy clinical outcome",
+    "our_final3_avg": 7.151515151515151,
+    "published_static_sonnet5": 6.848484848484849,
+    "published_active_sonnet5": 5.833333333333333,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "condensed matter superconductivity pairing mechanism",
+    "our_final3_avg": 7.151515151515151,
+    "published_static_sonnet5": 4.954545454545454,
+    "published_active_sonnet5": 6.287878787878788,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "gravitational wave detector LIGO black hole merger",
+    "our_final3_avg": 7.833333333333333,
+    "published_static_sonnet5": 4.818181818181818,
+    "published_active_sonnet5": 5.924242424242425,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "neutrino oscillation mass hierarchy experiment",
+    "our_final3_avg": 7.075757575757575,
+    "published_static_sonnet5": 3.727272727272727,
+    "published_active_sonnet5": 5.787878787878788,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "photovoltaic perovskite solar cell efficiency",
+    "our_final3_avg": 7.863636363636364,
+    "published_static_sonnet5": 5.924242424242425,
+    "published_active_sonnet5": 6.227272727272727,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "quantum computing qubit fidelity coherence",
+    "our_final3_avg": 6.878787878787879,
+    "published_static_sonnet5": 6.045454545454546,
+    "published_active_sonnet5": 6.333333333333333,
+    "total_model_calls": 57,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "quantum sensing magnetometer atomic clock precision",
+    "our_final3_avg": 7.287878787878788,
+    "published_static_sonnet5": 5.409090909090909,
+    "published_active_sonnet5": 5.8181818181818175,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "spin-orbit coupling magnetic topology skyrmion",
+    "our_final3_avg": 7.924242424242425,
+    "published_static_sonnet5": 7.075757575757575,
+    "published_active_sonnet5": 6.333333333333333,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "2D material graphene van der Waals heterostructure",
+    "our_final3_avg": 7.287878787878788,
+    "published_static_sonnet5": 5.893939393939394,
+    "published_active_sonnet5": 6.439393939393939,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "rare disease gene therapy clinical trial outcome",
+    "our_final3_avg": 7.56060606060606,
+    "published_static_sonnet5": 5.590909090909091,
+    "published_active_sonnet5": 6.984848484848484,
+    "total_model_calls": 55,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "antiviral resistance infectious disease mechanism",
+    "status": "generation_failed"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "heart failure cardiac remodeling fibrosis mechanism",
+    "our_final3_avg": 7.621212121212121,
+    "published_static_sonnet5": 6.348484848484849,
+    "published_active_sonnet5": 7.515151515151516,
+    "total_model_calls": 56,
+    "status": "done"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "lung cancer liquid biopsy early detection ctDNA",
+    "our_final3_avg": 8.03030303030303,
+    "published_static_sonnet5": 6.848484848484849,
+    "published_active_sonnet5": 6.590909090909091,
+    "total_model_calls": 55,
+    "status": "done"
+  }
+]

@@ -1,0 +1,162 @@
+[
+  {
+    "domain": "Biology",
+    "subdomain": "CRISPR base editing prime editing genome therapeutic"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "antibody engineering affinity maturation therapeutic"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "cell-free protein synthesis in vitro transcription translation"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "circadian rhythm clock gene physiology regulation"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "lipid nanoparticle mRNA delivery transfection"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "neural circuit connectome behavior mapping"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "protein structure prediction binding interaction"
+  },
+  {
+    "domain": "Biology",
+    "subdomain": "spatial proteomics tissue imaging multiplex"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "3D scene understanding neural radiance field"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "adversarial robustness machine learning defense"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "continual learning catastrophic forgetting"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "federated learning privacy distributed training"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "large language model reasoning chain of thought"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "neural architecture search efficient model"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "self-supervised representation learning contrastive"
+  },
+  {
+    "domain": "CS",
+    "subdomain": "time series forecasting deep learning"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "asymmetric organocatalysis enantioselective synthesis"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "carbon capture sequestration amine sorbent"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "electrocatalysis CO2 reduction reaction mechanism"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "enzyme catalysis directed evolution biotransformation"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "mass spectrometry metabolomics analytical detection"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "molecular machine rotaxane catenane switch"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "photocatalysis solar fuel hydrogen water splitting"
+  },
+  {
+    "domain": "Chemistry",
+    "subdomain": "single-atom catalyst heterogeneous active site"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "COVID-19 long PASC post-acute sequelae mechanism"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "antiviral resistance infectious disease mechanism"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "diabetes insulin resistance metabolic syndrome"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "heart failure cardiac remodeling fibrosis mechanism"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "lung cancer liquid biopsy early detection ctDNA"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "neurodegeneration Alzheimer tau biomarker progression"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "pediatric oncology novel therapy clinical outcome"
+  },
+  {
+    "domain": "Medicine",
+    "subdomain": "rare disease gene therapy clinical trial outcome"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "2D material graphene van der Waals heterostructure"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "condensed matter superconductivity pairing mechanism"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "gravitational wave detector LIGO black hole merger"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "neutrino oscillation mass hierarchy experiment"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "photovoltaic perovskite solar cell efficiency"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "quantum computing qubit fidelity coherence"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "quantum sensing magnetometer atomic clock precision"
+  },
+  {
+    "domain": "Physics",
+    "subdomain": "spin-orbit coupling magnetic topology skyrmion"
+  }
+]

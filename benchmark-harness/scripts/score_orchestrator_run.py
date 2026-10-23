@@ -7,7 +7,7 @@ leaderboard uses (drop-highest-of-3 critics, weighted dimension sum).
 Deliberately does NOT import the orchestrator package: it reads the plain
 JSON an orchestrator run writes via `python -m orchestrator.cli --export
 path.json`, so the two systems stay independent (see
-docs/superpowers/plans/2026-09-16-orchestrator.md's standalone constraint).
+docs/design/plans/2026-09-16-orchestrator.md's standalone constraint).
 That JSON is the data contract between them.
 
 Each idea scored here is 3 real OpenRouter critic calls plus a Semantic
